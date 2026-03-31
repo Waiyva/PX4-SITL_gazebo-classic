@@ -121,15 +121,24 @@ if(MAVLINK_DEVELOPMENT)
   add_definitions(-DMAVLINK_DEVELOPMENT)
 endif()
 
-# see if catkin was invoked to build this
+# Detect ROS1/catkin environment.
+#
+# CATKIN_DEVEL_PREFIX means we are being built by catkin tools directly.
+# Without CATKIN_DEVEL_PREFIX, this project is often still built from a ROS1
+# shell (e.g. PX4 SITL launch flow), so we try to detect catkin quietly and
+# enable ROS1-dependent plugin code when available.
 if (CATKIN_DEVEL_PREFIX)
-  message(STATUS "catkin ENABLED")
+  message(STATUS "catkin ENABLED (devel)")
   find_package(catkin REQUIRED)
+  catkin_package()
+  add_definitions(-DBUILD_WITH_ROS1)
+elseif(DEFINED ENV{ROS_VERSION} AND "$ENV{ROS_VERSION}" STREQUAL "1")
+  find_package(catkin QUIET)
   if (catkin_FOUND)
-    catkin_package()
+    message(STATUS "catkin ENABLED (detected in ROS1 environment)")
     add_definitions(-DBUILD_WITH_ROS1)
   else()
-    message(FATAL_ERROR "catkin not found")
+    message(STATUS "catkin DISABLED (ROS1 env detected but catkin not found)")
   endif()
 else()
   message(STATUS "catkin DISABLED")
